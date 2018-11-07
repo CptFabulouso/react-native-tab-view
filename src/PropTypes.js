@@ -14,6 +14,8 @@ export const NavigationStatePropType = PropTypes.shape({
 });
 
 export const SceneRendererPropType = {
+  panX: PropTypes.object.isRequired,
+  offsetX: PropTypes.object.isRequired,
   layout: PropTypes.shape({
     measured: PropTypes.bool.isRequired,
     height: PropTypes.number.isRequired,
@@ -21,9 +23,7 @@ export const SceneRendererPropType = {
   }).isRequired,
   navigationState: NavigationStatePropType.isRequired,
   position: PropTypes.object.isRequired,
-  jumpToIndex: PropTypes.func.isRequired,
-  getLastPosition: PropTypes.func.isRequired,
-  subscribe: PropTypes.func.isRequired,
+  jumpTo: PropTypes.func.isRequired,
   useNativeDriver: PropTypes.bool,
 };
 
@@ -36,11 +36,13 @@ export const PagerRendererPropType = {
   navigationState: NavigationStatePropType.isRequired,
   panX: PropTypes.instanceOf(Animated.Value).isRequired,
   offsetX: PropTypes.instanceOf(Animated.Value).isRequired,
-  jumpToIndex: PropTypes.func.isRequired,
-  getLastPosition: PropTypes.func.isRequired,
-  subscribe: PropTypes.func.isRequired,
+  canJumpToTab: PropTypes.func.isRequired,
+  jumpTo: PropTypes.func.isRequired,
   animationEnabled: PropTypes.bool,
   swipeEnabled: PropTypes.bool,
   useNativeDriver: PropTypes.bool,
+  onSwipeStart: PropTypes.func,
+  onSwipeEnd: PropTypes.func,
+  onAnimationEnd: PropTypes.func,
   children: PropTypes.node.isRequired,
 };

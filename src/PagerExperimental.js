@@ -3,46 +3,56 @@
 import * as React from 'react';
 import PropTypes from 'prop-types';
 import { Animated, StyleSheet, View } from 'react-native';
-import * as GestureHandler from 'react-native-gesture-handler';
-import { PagerRendererPropType } from './TabViewPropTypes';
-import type { PagerRendererProps, Route } from './TabViewTypeDefinitions';
+import { PagerRendererPropType } from './PropTypes';
+import type { PagerRendererProps } from './TypeDefinitions';
 
 type Props<T> = PagerRendererProps<T> & {
   swipeDistanceThreshold?: number,
   swipeVelocityThreshold?: number,
+  GestureHandler: any,
 };
 
 const DefaultTransitionSpec = {
   timing: Animated.spring,
-  tension: 300,
-  friction: 35,
+  tension: 68,
+  friction: 12,
 };
 
-export default class TabViewPagerExperimental<
-  T: Route<*>
-> extends React.Component<Props<T>> {
+export default class PagerExperimental<T: *> extends React.Component<Props<T>> {
   static propTypes = {
     ...PagerRendererPropType,
     swipeDistanceThreshold: PropTypes.number,
     swipeVelocityThreshold: PropTypes.number,
+    GestureHandler: PropTypes.object,
   };
 
-  componentDidMount() {
-    this._resetListener = this.props.subscribe('reset', this._transitionTo);
-  }
+  static defaultProps = {
+    canJumpToTab: () => true,
+  };
 
   componentDidUpdate(prevProps: Props<T>) {
-    if (prevProps.navigationState.index !== this.props.navigationState.index) {
+    if (
+      prevProps.navigationState.routes.length !==
+        this.props.navigationState.routes.length ||
+      prevProps.layout.width !== this.props.layout.width
+    ) {
+      this._transitionTo(this.props.navigationState.index, undefined, false);
+    } else if (
+      prevProps.navigationState.index !== this.props.navigationState.index &&
+      this.props.navigationState.index !== this._pendingIndex
+    ) {
       this._transitionTo(this.props.navigationState.index);
     }
   }
 
-  componentWillUnmount() {
-    this._resetListener.remove();
-  }
-
   _handleHandlerStateChange = event => {
-    if (event.nativeEvent.state === GestureHandler.State.END) {
+    const { GestureHandler } = this.props;
+
+    if (event.nativeEvent.state === GestureHandler.State.BEGAN) {
+      this.props.onSwipeStart && this.props.onSwipeStart();
+    } else if (event.nativeEvent.state === GestureHandler.State.END) {
+      this.props.onSwipeEnd && this.props.onSwipeEnd();
+
       const {
         navigationState,
         layout,
@@ -76,14 +86,25 @@ export default class TabViewPagerExperimental<
         );
       }
 
-      this._transitionTo(isFinite(nextIndex) ? nextIndex : currentIndex);
+      if (
+        !isFinite(nextIndex) ||
+        !this.props.canJumpToTab(this.props.navigationState.routes[nextIndex])
+      ) {
+        nextIndex = currentIndex;
+      }
+
+      this._transitionTo(nextIndex, velocityX);
     }
   };
 
-  _transitionTo = (index: number) => {
+  _transitionTo = (
+    index: number,
+    velocity?: number,
+    animated?: boolean = true
+  ) => {
     const offset = -index * this.props.layout.width;
 
-    if (this.props.animationEnabled === false) {
+    if (this.props.animationEnabled === false || animated === false) {
       this.props.panX.setValue(0);
       this.props.offsetX.setValue(offset);
       return;
@@ -96,16 +117,20 @@ export default class TabViewPagerExperimental<
       timing(this.props.panX, {
         ...transitionConfig,
         toValue: 0,
+        velocity,
         useNativeDriver,
       }),
       timing(this.props.offsetX, {
         ...transitionConfig,
         toValue: offset,
+        velocity,
         useNativeDriver,
       }),
     ]).start(({ finished }) => {
       if (finished) {
-        this.props.jumpToIndex(index);
+        const route = this.props.navigationState.routes[index];
+        this.props.jumpTo(route.key);
+        this.props.onAnimationEnd && this.props.onAnimationEnd();
         this._pendingIndex = null;
       }
     });
@@ -113,11 +138,11 @@ export default class TabViewPagerExperimental<
     this._pendingIndex = index;
   };
 
-  _resetListener: any;
   _pendingIndex: ?number;
 
   render() {
     const {
+      GestureHandler,
       panX,
       offsetX,
       layout,
@@ -128,11 +153,14 @@ export default class TabViewPagerExperimental<
     const { width } = layout;
     const { routes } = navigationState;
     const maxTranslate = width * (routes.length - 1);
-    const translateX = Animated.add(panX, offsetX).interpolate({
-      inputRange: [-maxTranslate, 0],
-      outputRange: [-maxTranslate, 0],
-      extrapolate: 'clamp',
-    });
+    const translateX =
+      routes.length > 1
+        ? Animated.add(panX, offsetX).interpolate({
+            inputRange: [-maxTranslate, 0],
+            outputRange: [-maxTranslate, 0],
+            extrapolate: 'clamp',
+          })
+        : 0;
 
     return (
       <GestureHandler.PanGestureHandler
@@ -152,19 +180,26 @@ export default class TabViewPagerExperimental<
               : null,
           ]}
         >
-          {React.Children.map(children, (child, i) => (
-            <View
-              key={navigationState.routes[i].key}
-              testID={navigationState.routes[i].testID}
-              style={
-                width
-                  ? { width }
-                  : i === navigationState.index ? StyleSheet.absoluteFill : null
-              }
-            >
-              {i === navigationState.index || width ? child : null}
-            </View>
-          ))}
+          {React.Children.map(children, (child, i) => {
+            const route = navigationState.routes[i];
+            const focused = i === navigationState.index;
+
+            return (
+              <View
+                key={route.key}
+                testID={this.props.getTestID({ route })}
+                accessibilityElementsHidden={!focused}
+                importantForAccessibility={
+                  focused ? 'auto' : 'no-hide-descendants'
+                }
+                style={
+                  width ? { width } : focused ? StyleSheet.absoluteFill : null
+                }
+              >
+                {focused || width ? child : null}
+              </View>
+            );
+          })}
         </Animated.View>
       </GestureHandler.PanGestureHandler>
     );

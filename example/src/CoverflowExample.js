@@ -1,7 +1,6 @@
 /* @flow */
-/* eslint-disable import/no-commonjs */
 
-import React, { PureComponent } from 'react';
+import * as React from 'react';
 import {
   Animated,
   View,
@@ -10,15 +9,18 @@ import {
   Dimensions,
   StyleSheet,
 } from 'react-native';
-import { TabViewAnimated, TabViewPagerPan } from 'react-native-tab-view';
+import {
+  TabView,
+  PagerPan,
+  type Route,
+  type NavigationState,
+} from 'react-native-tab-view';
 
-import type { NavigationState } from 'react-native-tab-view/types';
-
-type Route = {
-  key: string,
-};
-
-type State = NavigationState<Route>;
+type State = NavigationState<
+  Route<{
+    key: string,
+  }>
+>;
 
 const ALBUMS = {
   'Abbey Road': require('../assets/album-art-1.jpg'),
@@ -36,8 +38,9 @@ const initialLayout = {
   width: Dimensions.get('window').width,
 };
 
-export default class CoverflowExample extends PureComponent<*, State> {
+export default class CoverflowExample extends React.Component<*, State> {
   static title = 'Coverflow';
+  static backgroundColor = '#000';
   static appbarElevation = 0;
 
   state = {
@@ -49,10 +52,9 @@ export default class CoverflowExample extends PureComponent<*, State> {
     const { width } = layout;
     const { routes } = navigationState;
     const currentIndex = routes.indexOf(route);
-    // Prepend '-1', so there are always at least 2 items in inputRange
-    const inputRange = [-1, ...routes.map((x, i) => i)];
+    const inputRange = routes.map((x, i) => i);
     const translateOutputRange = inputRange.map(i => {
-      return width / 2 * (currentIndex - i) * -1;
+      return (width / 2) * (currentIndex - i) * -1;
     });
     const scaleOutputRange = inputRange.map(i => {
       if (currentIndex === i) {
@@ -72,14 +74,17 @@ export default class CoverflowExample extends PureComponent<*, State> {
     const translateX = position.interpolate({
       inputRange,
       outputRange: translateOutputRange,
+      extrapolate: 'clamp',
     });
     const scale = position.interpolate({
       inputRange,
       outputRange: scaleOutputRange,
+      extrapolate: 'clamp',
     });
     const opacity = position.interpolate({
       inputRange,
       outputRange: opacityOutputRange,
+      extrapolate: 'clamp',
     });
 
     return {
@@ -88,32 +93,30 @@ export default class CoverflowExample extends PureComponent<*, State> {
     };
   };
 
-  _handleIndexChange = index => {
+  _handleIndexChange = index =>
     this.setState({
       index,
     });
-  };
 
-  _renderScene = props => {
-    return (
-      <Animated.View style={[styles.page, this._buildCoverFlowStyle(props)]}>
-        <View style={styles.album}>
-          <Image source={ALBUMS[props.route.key]} style={styles.cover} />
-        </View>
-        <Text style={styles.label}>{props.route.key}</Text>
-      </Animated.View>
-    );
-  };
+  _renderTabBar = () => null;
 
-  _renderPager = props => {
-    return <TabViewPagerPan {...props} />;
-  };
+  _renderScene = props => (
+    <Animated.View style={[styles.page, this._buildCoverFlowStyle(props)]}>
+      <View style={styles.album}>
+        <Image source={ALBUMS[props.route.key]} style={styles.cover} />
+      </View>
+      <Text style={styles.label}>{props.route.key}</Text>
+    </Animated.View>
+  );
+
+  _renderPager = props => <PagerPan {...props} />;
 
   render() {
     return (
-      <TabViewAnimated
+      <TabView
         style={[styles.container, this.props.style]}
         navigationState={this.state}
+        renderTabBar={this._renderTabBar}
         renderPager={this._renderPager}
         renderScene={this._renderScene}
         onIndexChange={this._handleIndexChange}
@@ -126,7 +129,7 @@ export default class CoverflowExample extends PureComponent<*, State> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#222',
+    backgroundColor: '#000',
   },
   page: {
     flex: 1,

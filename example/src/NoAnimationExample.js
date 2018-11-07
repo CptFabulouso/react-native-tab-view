@@ -1,50 +1,55 @@
 /* @flow */
 
-import React, { PureComponent } from 'react';
+import * as React from 'react';
 import {
   Animated,
   View,
   TouchableWithoutFeedback,
   StyleSheet,
 } from 'react-native';
-import { TabViewAnimated } from 'react-native-tab-view';
+import {
+  TabView,
+  SceneMap,
+  type Route,
+  type NavigationState,
+} from 'react-native-tab-view';
 import { Ionicons } from '@expo/vector-icons';
-import BasicListView from './BasicListView';
-
-import type { NavigationState } from 'react-native-tab-view/types';
+import Albums from './shared/Albums';
+import Article from './shared/Article';
+import Chat from './shared/Chat';
+import Contacts from './shared/Contacts';
 
 const AnimatedIcon = Animated.createAnimatedComponent(Ionicons);
 
-type Route = {
-  key: string,
-  title: string,
-  icon: string,
-};
+type State = NavigationState<
+  Route<{
+    key: string,
+    title: string,
+    icon: string,
+  }>
+>;
 
-type State = NavigationState<Route>;
-
-export default class TopBarIconExample extends PureComponent<*, State> {
+export default class TopBarIconExample extends React.Component<*, State> {
   static title = 'No animation';
-  static backgroundColor = '#f4f4f4';
-  static tintColor = '#222';
+  static backgroundColor = '#fafafa';
+  static tintColor = '#263238';
   static appbarElevation = 4;
+  static statusBarStyle = 'dark-content';
 
   state = {
     index: 0,
     routes: [
-      { key: '1', title: 'Featured', icon: 'ios-star' },
-      { key: '2', title: 'Playlists', icon: 'ios-albums' },
-      { key: '3', title: 'Near Me', icon: 'ios-navigate' },
-      { key: '4', title: 'Search', icon: 'ios-search' },
-      { key: '5', title: 'Updates', icon: 'ios-download' },
+      { key: 'contacts', title: 'Contacts', icon: 'ios-people' },
+      { key: 'albums', title: 'Albums', icon: 'ios-albums' },
+      { key: 'article', title: 'Article', icon: 'ios-paper' },
+      { key: 'chat', title: 'Chat', icon: 'ios-chatboxes' },
     ],
   };
 
-  _handleIndexChange = index => {
+  _handleIndexChange = index =>
     this.setState({
       index,
     });
-  };
 
   _renderLabel = ({ position, navigationState }) => ({ route, index }) => {
     const inputRange = navigationState.routes.map((x, i) => i);
@@ -62,13 +67,7 @@ export default class TopBarIconExample extends PureComponent<*, State> {
     );
   };
 
-  _renderIcon = ({ navigationState, position }) => ({
-    route,
-    index,
-  }: {
-    route: Route,
-    index: number,
-  }) => {
+  _renderIcon = ({ navigationState, position }) => ({ route, index }) => {
     const inputRange = navigationState.routes.map((x, i) => i);
     const filledOpacity = position.interpolate({
       inputRange,
@@ -94,70 +93,39 @@ export default class TopBarIconExample extends PureComponent<*, State> {
     );
   };
 
-  _renderFooter = props => {
-    return (
-      <View style={styles.tabbar}>
-        {props.navigationState.routes.map((route, index) => {
-          return (
-            <TouchableWithoutFeedback
-              key={route.key}
-              onPress={() => props.jumpToIndex(index)}
-            >
-              <Animated.View style={styles.tab}>
-                {this._renderIcon(props)({ route, index })}
-                {this._renderLabel(props)({ route, index })}
-              </Animated.View>
-            </TouchableWithoutFeedback>
-          );
-        })}
-      </View>
-    );
-  };
+  _renderTabBar = props => (
+    <View style={styles.tabbar}>
+      {props.navigationState.routes.map((route, index) => {
+        return (
+          <TouchableWithoutFeedback
+            key={route.key}
+            onPress={() => props.jumpTo(route.key)}
+          >
+            <Animated.View style={styles.tab}>
+              {this._renderIcon(props)({ route, index })}
+              {this._renderLabel(props)({ route, index })}
+            </Animated.View>
+          </TouchableWithoutFeedback>
+        );
+      })}
+    </View>
+  );
 
-  _renderScene = ({ route }) => {
-    switch (route.key) {
-      case '1':
-        return (
-          <BasicListView
-            style={[styles.page, { backgroundColor: '#E3F4DD' }]}
-          />
-        );
-      case '2':
-        return (
-          <BasicListView
-            style={[styles.page, { backgroundColor: '#E6BDC5' }]}
-          />
-        );
-      case '3':
-        return (
-          <BasicListView
-            style={[styles.page, { backgroundColor: '#9DB1B5' }]}
-          />
-        );
-      case '4':
-        return (
-          <BasicListView
-            style={[styles.page, { backgroundColor: '#EDD8B5' }]}
-          />
-        );
-      case '5':
-        return (
-          <BasicListView
-            style={[styles.page, { backgroundColor: '#9E9694' }]}
-          />
-        );
-      default:
-        return null;
-    }
-  };
+  _renderScene = SceneMap({
+    contacts: Contacts,
+    albums: Albums,
+    article: Article,
+    chat: Chat,
+  });
 
   render() {
     return (
-      <TabViewAnimated
+      <TabView
         style={[styles.container, this.props.style]}
         navigationState={this.state}
         renderScene={this._renderScene}
-        renderFooter={this._renderFooter}
+        renderTabBar={this._renderTabBar}
+        tabBarPosition="bottom"
         onIndexChange={this._handleIndexChange}
         animationEnabled={false}
         swipeEnabled={false}
@@ -173,7 +141,7 @@ const styles = StyleSheet.create({
   tabbar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    backgroundColor: '#f4f4f4',
+    backgroundColor: '#fafafa',
   },
   tab: {
     flex: 1,
@@ -203,9 +171,5 @@ const styles = StyleSheet.create({
     marginTop: 3,
     marginBottom: 1.5,
     backgroundColor: 'transparent',
-  },
-  page: {
-    flex: 1,
-    backgroundColor: '#f9f9f9',
   },
 });

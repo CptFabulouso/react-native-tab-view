@@ -1,99 +1,76 @@
 /* @flow */
 
-import React, { PureComponent } from 'react';
+import * as React from 'react';
 import { StyleSheet, Dimensions } from 'react-native';
-import { TabViewAnimated, TabBar } from 'react-native-tab-view';
-import SimplePage from './SimplePage';
+import {
+  TabView,
+  TabBar,
+  SceneMap,
+  type Route,
+  type NavigationState,
+} from 'react-native-tab-view';
+import Article from './shared/Article';
+import Albums from './shared/Albums';
+import Chat from './shared/Chat';
+import Contacts from './shared/Contacts';
 
-import type { NavigationState } from 'react-native-tab-view/types';
-
-type Route = {
-  key: string,
-  title: string,
-};
-
-type State = NavigationState<Route>;
+type State = NavigationState<
+  Route<{
+    key: string,
+    title: string,
+  }>
+>;
 
 const initialLayout = {
   height: 0,
   width: Dimensions.get('window').width,
 };
 
-export default class TopBarTextExample extends PureComponent<*, State> {
+export default class TopBarTextExample extends React.Component<*, State> {
   static title = 'Scrollable top bar';
+  static backgroundColor = '#3f51b5';
   static appbarElevation = 0;
 
   state = {
     index: 1,
     routes: [
-      { key: '1', title: 'First' },
-      { key: '2', title: 'Second' },
-      { key: '3', title: 'Third' },
-      { key: '4', title: 'Fourth' },
+      { key: 'article', title: 'Article' },
+      { key: 'contacts', title: 'Contacts' },
+      { key: 'albums', title: 'Albums' },
+      { key: 'chat', title: 'Chat' },
     ],
   };
 
-  _handleIndexChange = index => {
+  _handleIndexChange = index =>
     this.setState({
       index,
     });
-  };
 
-  _renderHeader = props => {
-    return (
-      <TabBar
-        {...props}
-        scrollEnabled
-        indicatorStyle={styles.indicator}
-        style={styles.tabbar}
-        tabStyle={styles.tab}
-        labelStyle={styles.label}
-      />
-    );
-  };
+  _renderTabBar = props => (
+    <TabBar
+      {...props}
+      scrollEnabled
+      indicatorStyle={styles.indicator}
+      style={styles.tabbar}
+      tabStyle={styles.tab}
+      labelStyle={styles.label}
+    />
+  );
 
-  _renderScene = ({ route }) => {
-    switch (route.key) {
-      case '1':
-        return (
-          <SimplePage
-            state={this.state}
-            style={{ backgroundColor: '#ff4081' }}
-          />
-        );
-      case '2':
-        return (
-          <SimplePage
-            state={this.state}
-            style={{ backgroundColor: '#673ab7' }}
-          />
-        );
-      case '3':
-        return (
-          <SimplePage
-            state={this.state}
-            style={{ backgroundColor: '#4caf50' }}
-          />
-        );
-      case '4':
-        return (
-          <SimplePage
-            state={this.state}
-            style={{ backgroundColor: '#2196f3' }}
-          />
-        );
-      default:
-        return null;
-    }
-  };
+  _renderScene = SceneMap({
+    albums: Albums,
+    contacts: Contacts,
+    article: Article,
+    chat: Chat,
+  });
 
   render() {
     return (
-      <TabViewAnimated
+      <TabView
         style={[styles.container, this.props.style]}
         navigationState={this.state}
         renderScene={this._renderScene}
-        renderHeader={this._renderHeader}
+        renderTabBar={this._renderTabBar}
         onIndexChange={this._handleIndexChange}
         initialLayout={initialLayout}
       />
@@ -106,7 +83,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tabbar: {
-    backgroundColor: '#222',
+    backgroundColor: '#3f51b5',
   },
   tab: {
     width: 120,

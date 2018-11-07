@@ -1,103 +1,72 @@
 /* @flow */
 
-import React, { PureComponent } from 'react';
+import * as React from 'react';
 import { StyleSheet, Dimensions } from 'react-native';
 import {
-  TabViewAnimated,
+  TabView,
   TabBar,
-  TabViewPagerExperimental,
+  PagerExperimental,
+  SceneMap,
+  type Route,
+  type NavigationState,
 } from 'react-native-tab-view';
-import SimplePage from './SimplePage';
+import * as GestureHandler from 'react-native-gesture-handler';
+import Albums from './shared/Albums';
+import Article from './shared/Article';
+import Chat from './shared/Chat';
 
-import type { NavigationState } from 'react-native-tab-view/types';
-
-type Route = {
-  key: string,
-  title: string,
-};
-
-type State = NavigationState<Route>;
+type State = NavigationState<
+  Route<{
+    key: string,
+    title: string,
+  }>
+>;
 
 const initialLayout = {
   height: 0,
   width: Dimensions.get('window').width,
 };
 
-export default class NativeDriverExample extends PureComponent<*, State> {
-  static title = 'With native animations';
+export default class NativeDriverExample extends React.Component<*, State> {
+  static title = 'Native animations';
+  static backgroundColor = '#f44336';
   static appbarElevation = 0;
 
   state = {
     index: 1,
     routes: [
-      { key: '1', title: 'First' },
-      { key: '2', title: 'Second' },
-      { key: '3', title: 'Third' },
+      { key: 'article', title: 'Article' },
+      { key: 'albums', title: 'Albums' },
+      { key: 'chat', title: 'Chat' },
     ],
   };
 
-  _handleIndexChange = index => {
+  _handleIndexChange = index =>
     this.setState({
       index,
     });
-  };
 
-  _renderHeader = props => {
-    return (
-      <TabBar
-        {...props}
-        indicatorStyle={styles.indicator}
-        style={styles.tabbar}
-        tabStyle={styles.tab}
-        labelStyle={styles.label}
-      />
-    );
-  };
+  _renderTabBar = props => (
+    <TabBar {...props} style={styles.tabbar} labelStyle={styles.label} />
+  );
 
-  _renderScene = ({ route }) => {
-    switch (route.key) {
-      case '1':
-        return (
-          <SimplePage
-            state={this.state}
-            style={{ backgroundColor: '#ff4081' }}
-          />
-        );
-      case '2':
-        return (
-          <SimplePage
-            state={this.state}
-            style={{ backgroundColor: '#673ab7' }}
-          />
-        );
-      case '3':
-        return (
-          <SimplePage
-            state={this.state}
-            style={{ backgroundColor: '#4caf50' }}
-          />
-        );
-      case '4':
-        return (
-          <SimplePage
-            state={this.state}
-            style={{ backgroundColor: '#2196f3' }}
-          />
-        );
-      default:
-        return null;
-    }
-  };
+  _renderScene = SceneMap({
+    article: Article,
+    albums: Albums,
+    chat: Chat,
+  });
 
-  _renderPager = props => <TabViewPagerExperimental {...props} />;
+  _renderPager = props => (
+    <PagerExperimental GestureHandler={GestureHandler} {...props} />
+  );
 
   render() {
     return (
-      <TabViewAnimated
+      <TabView
         style={[styles.container, this.props.style]}
         navigationState={this.state}
         renderScene={this._renderScene}
-        renderHeader={this._renderHeader}
+        renderTabBar={this._renderTabBar}
         renderPager={this._renderPager}
         onIndexChange={this._handleIndexChange}
         initialLayout={initialLayout}
@@ -112,13 +81,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   tabbar: {
-    backgroundColor: '#222',
-  },
-  tab: {
-    width: 120,
-  },
-  indicator: {
-    backgroundColor: '#ffeb3b',
+    backgroundColor: '#f44336',
   },
   label: {
     color: '#fff',

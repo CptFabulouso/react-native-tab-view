@@ -3,14 +3,14 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { Animated, View } from 'react-native';
-import TabViewPagerScroll from '../src/TabViewPagerScroll';
+import PagerScroll from '../src/PagerScroll';
 
 it('renders only focused child until layout', () => {
   /* $FlowFixMe */
   console.error = jest.fn(); // suppress propType warnings
 
   const component = shallow(
-    <TabViewPagerScroll
+    <PagerScroll
       layout={{ height: 0, width: 0, measured: false }}
       navigationState={{
         index: 1,
@@ -21,17 +21,16 @@ it('renders only focused child until layout', () => {
         ],
       }}
       position={new Animated.Value(1)}
-      jumpToIndex={jest.fn()}
-      getLastPosition={jest.fn()}
-      subscribe={jest.fn()}
+      jumpTo={jest.fn()}
       panX={new Animated.Value(0)}
       offsetX={new Animated.Value(0)}
       useNativeDriver={false}
+      getTestID={({ route }) => route.testID}
     >
       <View />
       <View />
       <View />
-    </TabViewPagerScroll>
+    </PagerScroll>
   );
 
   expect(
@@ -82,7 +81,7 @@ it('sets initial scroll position according to navigation state index', () => {
   console.error = jest.fn(); // suppress propType warnings
 
   const component = shallow(
-    <TabViewPagerScroll
+    <PagerScroll
       layout={{ height: 320, width: 240, measured: false }}
       navigationState={{
         index: 2,
@@ -93,17 +92,16 @@ it('sets initial scroll position according to navigation state index', () => {
         ],
       }}
       position={new Animated.Value(1)}
-      jumpToIndex={jest.fn()}
-      getLastPosition={jest.fn()}
-      subscribe={jest.fn()}
+      jumpTo={jest.fn()}
       panX={new Animated.Value(0)}
       offsetX={new Animated.Value(0)}
       useNativeDriver={false}
+      getTestID={jest.fn()}
     >
       <View />
       <View />
       <View />
-    </TabViewPagerScroll>
+    </PagerScroll>
   );
 
   expect(component.dive().instance().props.contentOffset).toEqual({

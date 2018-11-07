@@ -3,11 +3,11 @@
 import * as React from 'react';
 import { shallow } from 'enzyme';
 import { Animated, View } from 'react-native';
-import TabViewPagerPan from '../src/TabViewPagerPan';
+import PagerPan from '../src/PagerPan';
 
 it('renders all children', () => {
   const component = shallow(
-    <TabViewPagerPan
+    <PagerPan
       layout={{ height: 0, width: 0, measured: false }}
       navigationState={{
         index: 1,
@@ -18,17 +18,16 @@ it('renders all children', () => {
         ],
       }}
       position={new Animated.Value(1)}
-      jumpToIndex={jest.fn()}
-      getLastPosition={jest.fn()}
-      subscribe={jest.fn()}
+      jumpTo={jest.fn()}
       panX={new Animated.Value(0)}
       offsetX={new Animated.Value(0)}
       useNativeDriver={false}
+      getTestID={({ route }) => route.testID}
     >
       <View />
       <View />
       <View />
-    </TabViewPagerPan>
+    </PagerPan>
   );
 
   expect(
